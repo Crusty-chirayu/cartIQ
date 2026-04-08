@@ -1,7 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",   // 🔥 ADD THIS LINE
-
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -16,15 +14,15 @@
     "jsx": "react-jsx",
     "incremental": true,
 
+    "paths": {
+      "@/*": ["./*"]
+    },
+
     "plugins": [
       {
         "name": "next"
       }
-    ],
-
-    "paths": {
-      "@/*": ["./*"]
-    }
+    ]
   },
 
   "include": [

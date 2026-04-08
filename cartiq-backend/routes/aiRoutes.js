@@ -1,135 +1,36 @@
-const express = require("express")
-const router = express.Router()
-const axios = require("axios")
+// c:\Users\chira\cartIQ\cartiq-backend\routes\aiRoutes.js
+const express = require("express");
+const router = express.Router();
+const {
+  chat,
+  getConversationHistory,
+  clearConversation,
+  generateDescription,
+  generateTags,
+  recommend,
+  searchSemantic,
+  suggestPricing,
+} = require("../controllers/aiController");
+const { protect } = require("../middleware/authMiddleware");
 
-const Product = require("../models/Product")
+router.use(protect);
 
-/* ================= AI CHAT (OPENROUTER) ================= */
+// Chat endpoints
+router.post("/chat", chat);
+router.get("/conversations/:id", getConversationHistory);
+router.delete("/conversations/:id", clearConversation);
 
-router.post("/chat", async (req, res) => {
+// AI generation endpoints
+router.post("/generate/description", generateDescription);
+router.post("/generate/tags", generateTags);
 
-  try {
+// Recommendations
+router.get("/recommend", recommend);
 
-    const { message, history } = req.body
+// Search
+router.post("/search/semantic", searchSemantic);
 
-    if (!message) {
-      return res.status(400).json({ message: "Message is required" })
-    }
+// Pricing suggestions (seller only)
+router.post("/pricing/suggest", suggestPricing);
 
-    const lowerMsg = message.toLowerCase()
-
-    /* ================= SMART FILTER ================= */
-
-    let query = {}
-
-    // price filter
-    const priceMatch = lowerMsg.match(/under (\d+)/)
-    if (priceMatch) {
-      query.price = { $lte: Number(priceMatch[1]) }
-    }
-
-    // category filter
-    if (lowerMsg.includes("shoe")) query.category = "Shoes"
-    if (lowerMsg.includes("laptop")) query.category = "Electronics"
-    if (lowerMsg.includes("phone")) query.category = "Electronics"
-
-    /* ================= SORT LOGIC ================= */
-
-    let sortOption = {}
-
-    if (lowerMsg.includes("cheap") || lowerMsg.includes("lowest")) {
-      sortOption = { price: 1 }
-    }
-
-    if (lowerMsg.includes("expensive") || lowerMsg.includes("premium")) {
-      sortOption = { price: -1 }
-    }
-
-    /* ================= FETCH PRODUCTS ================= */
-
-    let products = await Product.find(query).sort(sortOption).limit(10)
-
-    // fallback if no products
-    if (products.length === 0) {
-      products = await Product.find({}).limit(5)
-    }
-
-    /* ================= MEMORY ================= */
-
-    const conversation = history
-      ?.slice(-5)
-      .map(m => `${m.role}: ${m.text}`)
-      .join("\n") || ""
-
-    /* ================= PROMPT ================= */
-
-    const prompt = `
-You are an AI shopping assistant.
-
-Conversation:
-${conversation}
-
-User:
-${message}
-
-Products:
-${JSON.stringify(products)}
-
-Rules:
-- Recommend relevant products only
-- Mention product name and price
-- Keep response short and helpful
-`
-
-    /* ================= OPENROUTER API ================= */
-
-    const response = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        model: "deepseek/deepseek-chat",
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful ecommerce assistant."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ]
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "HTTP-Referer": "http://localhost:3000",
-          "X-Title": "CartIQ",
-          "Content-Type": "application/json"
-        }
-      }
-    )
-
-    const reply =
-      response.data?.choices?.[0]?.message?.content ||
-      "No response from AI"
-
-    res.json({
-      reply,
-      products
-    })
-
-  } catch (error) {
-
-    console.error(
-      "AI ERROR:",
-      error.response?.data || error.message
-    )
-
-    res.status(500).json({
-      message: "AI request failed"
-    })
-
-  }
-
-})
-
-module.exports = router
+module.exports = router;

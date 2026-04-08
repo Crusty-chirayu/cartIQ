@@ -1,64 +1,102 @@
-const jwt = require("jsonwebtoken")
-const User = require("../models/User")
+// c:\Users\chira\cartIQ\cartiq-backend\middleware\authMiddleware.js
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-/* ================= PROTECT ROUTE ================= */
-
+/**
+ * Verify JWT token and attach user to request
+ */
 const protect = async (req, res, next) => {
+  let token;
 
-  let token
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-
-    try {
-
-      token = req.headers.authorization.split(" ")[1]
-
-      const decoded = jwt.verify(token, process.env.JWT_SECRET)
-
-      req.user = await User.findById(decoded.id).select("-password")
-
-      next()
-
-    } catch (error) {
-
-      return res.status(401).json({
-        message: "Not authorized, token failed"
-      })
-
-    }
-
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies.accessToken) {
+    token = req.cookies.accessToken;
   }
 
   if (!token) {
     return res.status(401).json({
-      message: "Not authorized, no token"
-    })
+      success: false,
+      message: "Not authorized. No token provided.",
+    });
   }
 
-}
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id);
 
-/* ================= ROLE CHECK ================= */
-
-const authorizeRoles = (...roles) => {
-
-  return (req, res, next) => {
-
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        message: "Access denied"
-      })
+    if (!req.user || req.user.isBanned) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found or banned.",
+      });
     }
 
-    next()
+    next();
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        success: false,
+        message: "Token expired. Please refresh.",
+      });
+    }
 
+    return res.status(401).json({
+      success: false,
+      message: "Not authorized. Invalid token.",
+    });
+  }
+};
+
+/**
+ * Optional authentication - don't fail if no token
+ */
+const optionalAuth = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies.accessToken) {
+    token = req.cookies.accessToken;
   }
 
-}
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = await User.findById(decoded.id);
+    } catch (error) {
+      // Silently fail - user is optional
+    }
+  }
+
+  next();
+};
+
+/**
+ * Authorize specific roles
+ */
+const authorizeRoles = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required.",
+      });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: `Only ${allowedRoles.join(", ")} can access this resource.`,
+      });
+    }
+
+    next();
+  };
+};
 
 module.exports = {
   protect,
-  authorizeRoles
-}
+  optionalAuth,
+  authorizeRoles,
+};

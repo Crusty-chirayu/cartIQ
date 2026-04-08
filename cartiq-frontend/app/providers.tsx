@@ -2,6 +2,8 @@
 
 import { AuthProvider } from "@/context/AuthContext"
 import { AppProvider } from "@/context/AppContext"
+import { CartProvider } from "@/context/CartContext"
+import { Toaster } from "react-hot-toast"
 
 export default function Providers({
   children,
@@ -10,9 +12,12 @@ export default function Providers({
 }) {
   return (
     <AuthProvider>
-      <AppProvider>   {/* 🔥 ADD THIS */}
-        {children}
-      </AppProvider>
+      <CartProvider>
+        <AppProvider>
+          {children}
+          <Toaster position="top-right" />
+        </AppProvider>
+      </CartProvider>
     </AuthProvider>
   )
 }

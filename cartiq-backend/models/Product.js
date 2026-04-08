@@ -1,51 +1,143 @@
 const mongoose = require("mongoose");
 
-const productSchema = mongoose.Schema(
+const productSchema = new mongoose.Schema(
   {
-    name: {
+    title: {
       type: String,
-      required: [true, "Product name is required"],
+      required: [true, "Product title is required"],
       trim: true,
     },
 
-    user: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-  required: true
-},
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+      lowercase: true,
+    },
 
     description: {
       type: String,
       required: [true, "Description is required"],
     },
 
+    shortDescription: {
+      type: String,
+      maxlength: 500,
+    },
+
     price: {
       type: Number,
       required: [true, "Price is required"],
+      min: 0,
     },
+
+    comparePrice: {
+      type: Number,
+      min: 0,
+    },
+
+    costPrice: {
+      type: Number,
+      min: 0,
+    },
+
+    images: [
+      {
+        url: { type: String, required: true },
+        alt: String,
+        isPrimary: { type: Boolean, default: false },
+      },
+    ],
 
     category: {
-      type: String,
-      required: [true, "Category is required"],
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
     },
 
-    image: {
-      type: String,
-      required: [true, "Image is required"],
+    tags: [String],
+
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
 
-    countInStock: {
+    variants: [
+      {
+        name: String,
+        options: [
+          {
+            label: String,
+            priceModifier: { type: Number, default: 0 },
+            stock: { type: Number, default: 0 },
+            sku: String,
+          },
+        ],
+      },
+    ],
+
+    stock: {
       type: Number,
-      required: [true, "Stock is required"],
+      required: true,
       default: 0,
     },
 
-    rating: {
+    lowStockThreshold: {
+      type: Number,
+      default: 5,
+    },
+
+    sku: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    barcode: String,
+
+    status: {
+      type: String,
+      enum: ["draft", "active", "paused", "deleted"],
+      default: "draft",
+    },
+
+    attributes: mongoose.Schema.Types.Map,
+
+    seo: {
+      metaTitle: String,
+      metaDescription: String,
+      keywords: [String],
+    },
+
+    aiData: {
+      generatedDescription: String,
+      suggestedTags: [String],
+      demandScore: { type: Number, default: 0, min: 0, max: 100 },
+    },
+
+    ratings: {
+      average: { type: Number, default: 0 },
+      count: { type: Number, default: 0 },
+    },
+
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+
+    views: {
       type: Number,
       default: 0,
     },
 
-    numReviews: {
+    sales: {
       type: Number,
       default: 0,
     },
@@ -54,5 +146,9 @@ const productSchema = mongoose.Schema(
     timestamps: true,
   }
 );
+
+productSchema.index({ title: "text", description: "text", tags: "text" });
+productSchema.index({ seller: 1 });
+productSchema.index({ category: 1 });
 
 module.exports = mongoose.model("Product", productSchema);

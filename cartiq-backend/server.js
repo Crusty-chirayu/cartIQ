@@ -1,47 +1,71 @@
-require("dotenv").config()
+require("dotenv").config();
 
-const express = require("express")
-const cors = require("cors")
+const app = require("./app");
+const logger = require("./utils/logger");
 
-const connectDB = require("./config/db")
+// ❌ MongoDB DISABLED
+const connectDB = async () => {
+  console.log("⚠️ MongoDB disabled (dev mode)");
+};
 
-/* ================= ROUTES ================= */
+// ❌ Redis DISABLED
+const redisClient = {
+  quit: async () => {},
+};
 
-const productRoutes = require("./routes/productRoutes")
-const uploadRoutes = require("./routes/uploadRoutes")
-const orderRoutes = require("./routes/orderRoutes")
-const aiRoutes = require("./routes/aiRoutes")
-const authRoutes = require("./routes/authRoutes")
+logger.warn("⚠️ Redis disabled (dev mode)");
 
-/* ================= INIT ================= */
+const PORT = process.env.PORT || 5000;
 
-connectDB()
+// Create server
+const server = require("http").createServer(app);
 
-const app = express()
+// Initialize server
+const initializeServer = async () => {
+  try {
+    // Skip DB connection
+    await connectDB();
 
-/* ================= MIDDLEWARE ================= */
+    // Socket (safe)
+    try {
+      const setupSocket = require("./sockets");
+      setupSocket(server);
+      logger.info("Socket.io initialized");
+    } catch (err) {
+      logger.warn("Socket.io skipped");
+    }
 
-app.use(cors())
-app.use(express.json())
+    server.listen(PORT, () => {
+      logger.info(`🚀 Server running on port ${PORT}`);
+      logger.info(`Environment: ${process.env.NODE_ENV || "development"}`);
+    });
 
-/* ================= API ROUTES ================= */
+  } catch (error) {
+    logger.error("Server failed:", error.message);
+    process.exit(1);
+  }
+};
 
-app.use("/api/products", productRoutes)
-app.use("/api/upload", uploadRoutes)
-app.use("/api/orders", orderRoutes)
-app.use("/api/ai", aiRoutes)
-app.use("/api/auth", authRoutes)
+initializeServer();
 
-/* ================= ROOT ================= */
+// Graceful shutdown
+process.on("SIGTERM", async () => {
+  logger.info("Shutting down...");
 
-app.get("/", (req, res) => {
-  res.send("CartIQ Backend is running 🚀")
-})
+  server.close(async () => {
+    await redisClient.quit();
+    process.exit(0);
+  });
+});
 
-/* ================= SERVER ================= */
+process.on("SIGINT", () => {
+  logger.info("SIGINT received. Exiting.");
+  process.exit(0);
+});
 
-const PORT = process.env.PORT || 5000
+// Handle unhandled errors
+process.on("unhandledRejection", (err) => {
+  logger.error("Unhandled Rejection:", err);
+});
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`)
-})
+module.exports = { server, redisClient, app };
