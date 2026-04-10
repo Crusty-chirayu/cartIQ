@@ -18,6 +18,10 @@ export default function ProductCard({ product, size = "md" }: ProductCardProps) 
   const [isAdding, setIsAdding] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
+  const primaryImage = product.images?.find((img: any) => img.isPrimary)?.url || product.images?.[0]?.url;
+  const rating = product.ratings?.average || 0;
+  const reviewCount = product.ratings?.count || 0;
+
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -31,7 +35,7 @@ export default function ProductCard({ product, size = "md" }: ProductCardProps) 
     try {
       await cartApi.add({ productId: product._id, quantity: 1 });
       await refreshCart();
-      showToast(`${product.name} added to cart!`, "success");
+      showToast(`${product.title} added to cart!`, "success");
       dispatch({ type: "TOGGLE_CART", payload: true });
     } catch {
       showToast("Failed to add to cart", "error");
@@ -44,13 +48,14 @@ export default function ProductCard({ product, size = "md" }: ProductCardProps) 
     size === "sm" ? "h-44" : size === "lg" ? "h-72" : "h-56";
 
   return (
-    // 🔥 IMPORTANT CHANGE — correct dynamic route
-<Link href={`/product/${product._id}`} className="block group">      <div className="product-card h-full">
+    // Use slug for routing instead of ID
+    <Link href={`/product/${product.slug}`} className="block group">
+      <div className="product-card h-full">
         {/* Image */}
         <div className={`relative ${imageHeightClass} bg-cartiq-bg-secondary overflow-hidden`}>
           <AppImage
-            src={product.image || "/assets/images/no_image.png"}
-            alt={product.name}
+            src={primaryImage || "/assets/images/no_image.png"}
+            alt={product.title}
             fill
             className="product-card-image object-cover"
           />
@@ -76,7 +81,7 @@ export default function ProductCard({ product, size = "md" }: ProductCardProps) 
           <div className="absolute bottom-0 inset-x-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
             <button
               onClick={handleAddToCart}
-              disabled={isAdding || product.countInStock === 0}
+              disabled={isAdding || product.stock === 0}
               className="w-full bg-cartiq-dark text-white text-xs font-semibold py-3 flex items-center justify-center gap-2 hover:bg-cartiq-dark-secondary transition-colors font-heading disabled:opacity-50"
             >
               {isAdding ? (
@@ -84,7 +89,7 @@ export default function ProductCard({ product, size = "md" }: ProductCardProps) 
               ) : (
                 <Icon name="ShoppingBagIcon" size={14} />
               )}
-              {product.countInStock === 0
+              {product.stock === 0
                 ? "Out of Stock"
                 : isAdding
                 ? "Adding…"
@@ -96,22 +101,22 @@ export default function ProductCard({ product, size = "md" }: ProductCardProps) 
         {/* Info */}
         <div className="p-4">
           <p className="text-[11px] font-semibold text-cartiq-subtle uppercase tracking-wider mb-1 font-heading">
-            {product.category}
+            {typeof product.category === "string" ? product.category : (product.category as any)?.name}
           </p>
 
           <h3 className="text-sm font-semibold text-cartiq-foreground line-clamp-2 mb-2 font-heading leading-snug group-hover:text-cartiq-accent transition-colors">
-            {product.name}
+            {product.title}
           </h3>
 
           {/* Rating */}
-          {product.rating > 0 && (
+          {rating > 0 && (
             <div className="flex items-center gap-1.5 mb-2">
               <div className="flex items-center gap-0.5">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <svg
                     key={star}
                     className={`w-3 h-3 ${
-                      star <= Math.round(product.rating) ? "star-filled" : "star-empty"
+                      star <= Math.round(rating) ? "star-filled" : "star-empty"
                     }`}
                     fill="currentColor"
                     viewBox="0 0 20 20"
@@ -121,7 +126,7 @@ export default function ProductCard({ product, size = "md" }: ProductCardProps) 
                 ))}
               </div>
               <span className="text-[11px] text-cartiq-subtle font-mono">
-                ({product.numReviews})
+                ({reviewCount})
               </span>
             </div>
           )}

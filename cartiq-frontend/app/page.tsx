@@ -9,6 +9,7 @@ import { Product, Category } from "@/types";
 import ProductCard from "@/components/ProductCard";
 import { Loader, Badge } from "@/components/ui";
 import Footer from "@/components/Footer";
+import { div } from "framer-motion/client";
 
 export default function Homepage() {
   const { get, loading } = useApi();
@@ -36,47 +37,70 @@ export default function Homepage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="relative h-96 md:h-[500px] bg-gradient-to-r from-blue-600 to-purple-600 overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0 bg-pattern"></div>
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 via-blue-50 to-purple-50">
+      {/* Hero Banner with Animation */}
+      <section className="relative h-96 md:h-[500px] bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 opacity-30 bg-gradient-to-r from-blue-400 to-pink-400 animate-pulse"></div>
         </div>
-        <div className="relative h-full max-w-7xl mx-auto px-4 flex items-center">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Welcome to CartIQ
+        
+        <div className="relative h-full max-w-7xl mx-auto px-4 flex items-center justify-between">
+          <div className="max-w-2xl animate-fadeInUp">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
+              🛍️ CartIQ - Your AI Shopping Hub
             </h1>
-            <p className="text-xl text-blue-100 mb-8">
-              AI-powered shopping experience with smart recommendations
+            <p className="text-xl md:text-2xl text-blue-100 mb-8 drop-shadow">
+              Smart recommendations • Fast shipping • Best prices
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <Link
                 href="/shop"
-                className="px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                className="px-8 py-3 bg-white text-purple-600 font-bold rounded-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
               >
-                Shop Now
+                🛒 Shop Now
               </Link>
               <Link
                 href="/ai"
-                className="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-colors"
+                className="px-8 py-3 border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-purple-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
               >
-                Try AI Chat
+                🤖 Try AI Chat
               </Link>
             </div>
           </div>
-          <div className="hidden md:block absolute right-0 top-1/2 transform -translate-y-1/2">
-            <div className="w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="hidden md:block absolute right-10 top-1/2 transform -translate-y-1/2">
+            <div className="w-96 h-96 bg-white/20 rounded-full blur-3xl animate-float"></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Promotional Ads Carousel */}
+      <section className="py-6 bg-white shadow-md overflow-x-auto">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex gap-4 pb-4 overflow-x-auto">
+            {[
+              { icon: "⚡", text: "Free Shipping on Orders Above ₹500", color: "bg-yellow-100 text-yellow-800" },
+              { icon: "🎁", text: "First Time Buyer? Get 20% OFF with WELCOME20", color: "bg-pink-100 text-pink-800" },
+              { icon: "🚀", text: "Same Day Delivery Available in Select Areas", color: "bg-blue-100 text-blue-800" },
+            ].map((promo, idx) => (
+              <div
+                key={idx}
+                className={`flex-shrink-0 ${promo.color} px-6 py-3 rounded-lg font-semibold whitespace-nowrap animate-slideInRight`}
+                style={{ animationDelay: `${idx * 0.1}s` }}
+              >
+                {promo.icon} {promo.text}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Categories Section */}
-      <section className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Categories</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {categories.map((category) => (
+      <section className="py-12 bg-gradient-to-b from-white to-gray-50">
+        <div className="max-w-7xl mx-auto px-4 animate-fadeInUp">
+          <h2 className="text-4xl font-bold text-gray-900 mb-2">🏪 Browse by Category</h2>
+          <p className="text-gray-600 mb-8 text-lg">Find products from your favorite categories</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {categories.map((category, idx) => (
               <Link
                 key={category._id}
                 href={`/shop?category=${category.slug}`}
@@ -200,14 +224,5 @@ export default function Homepage() {
 
       <Footer />
     </main>
-  );
-}
-
-          <button className="bg-yellow-500 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-400 transition">
-            Add to Cart
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

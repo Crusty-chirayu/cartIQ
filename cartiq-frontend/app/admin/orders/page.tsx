@@ -19,7 +19,7 @@ export default function AdminOrdersPage() {
         const response = await get("/admin/orders", { showToast: false });
         setOrders(response?.data || []);
       } catch (err) {
-        console.error("Failed to fetch orders");
+        console.error("Failed to fetch orders:", err);
       } finally {
         setLoading(false);
       }
@@ -35,7 +35,7 @@ export default function AdminOrdersPage() {
         prev.map((o) => (o._id === orderId ? { ...o, status: status as any } : o))
       );
     } catch (err) {
-      console.error("Failed to update order");
+      console.error("Failed to update order:", err);
     }
   };
 

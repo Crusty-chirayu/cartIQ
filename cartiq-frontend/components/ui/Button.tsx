@@ -27,18 +27,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={loading || disabled}
         className={clsx(
-          "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
+          "inline-flex items-center justify-center font-bold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg",
           {
             // Variants
-            "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500":
+            "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 focus:ring-blue-500":
               variant === "primary",
-            "bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500":
+            "bg-gradient-to-r from-gray-200 to-gray-300 text-gray-900 hover:from-gray-300 hover:to-gray-400 focus:ring-gray-500":
               variant === "secondary",
-            "border-2 border-gray-300 text-gray-900 hover:border-gray-400 focus:ring-gray-500":
+            "border-2 border-gray-400 bg-white text-gray-900 hover:bg-gray-50 hover:border-gray-500 focus:ring-gray-500":
               variant === "outline",
             "text-gray-700 hover:bg-gray-100 focus:ring-gray-500":
               variant === "ghost",
-            "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500":
+            "bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 focus:ring-red-500":
               variant === "danger",
             // Sizes
             "px-3 py-1 text-xs rounded": size === "xs",

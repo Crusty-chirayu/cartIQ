@@ -28,7 +28,7 @@ export default function SupportPage() {
         const response = await get("/support/tickets", { showToast: false });
         setTickets(response?.data || []);
       } catch (err) {
-        console.error("Failed to fetch tickets");
+        console.error("Failed to fetch tickets:", err);
       } finally {
         setLoading(false);
       }
@@ -45,7 +45,7 @@ export default function SupportPage() {
       setFormData({ title: "", description: "", category: "general" });
       setShowForm(false);
     } catch (err) {
-      console.error("Failed to create ticket");
+      console.error("Failed to create ticket:", err);
     }
   };
 

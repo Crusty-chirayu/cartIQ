@@ -2,20 +2,27 @@ require("dotenv").config();
 
 const app = require("./app");
 const logger = require("./utils/logger");
+const mongoose = require("mongoose");
 
-// ❌ MongoDB DISABLED
+const PORT = process.env.PORT || 5000;
+
+// ✅ REAL MongoDB connection
 const connectDB = async () => {
-  console.log("⚠️ MongoDB disabled (dev mode)");
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("✅ MongoDB connected");
+  } catch (error) {
+    console.error("❌ MongoDB connection failed:", error.message);
+    process.exit(1);
+  }
 };
 
-// ❌ Redis DISABLED
+// (optional) Redis disabled for now
 const redisClient = {
   quit: async () => {},
 };
 
 logger.warn("⚠️ Redis disabled (dev mode)");
-
-const PORT = process.env.PORT || 5000;
 
 // Create server
 const server = require("http").createServer(app);
@@ -23,7 +30,7 @@ const server = require("http").createServer(app);
 // Initialize server
 const initializeServer = async () => {
   try {
-    // Skip DB connection
+    // ✅ CONNECT DATABASE
     await connectDB();
 
     // Socket (safe)

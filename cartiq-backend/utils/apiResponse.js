@@ -16,14 +16,22 @@ class ApiResponse {
  * Build success response
  */
 const successResponse = (data, message = "Success", statusCode = 200) => {
-  return new ApiResponse(statusCode, data, message);
+  return {
+    success: true,
+    message,
+    data,
+  };
 };
 
 /**
  * Build error response
  */
 const errorResponse = (message = "Error", statusCode = 400, data = null) => {
-  return new ApiResponse(statusCode, data, message);
+  return {
+    success: false,
+    message,
+    data,
+  };
 };
 
 /**

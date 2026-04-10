@@ -31,7 +31,7 @@ const createTicket = asyncHandler(async (req, res) => {
   });
 
   res.status(201).json(
-    successResponse(201, ticket, "Support ticket created successfully")
+    successResponse(ticket, "Support ticket created successfully")
   );
 });
 
@@ -52,7 +52,6 @@ const getTickets = asyncHandler(async (req, res) => {
 
   res.json(
     successResponse(
-      200,
       { tickets, pagination: { page, limit, total } },
       "Tickets fetched"
     )
@@ -70,7 +69,7 @@ const getTicketDetail = asyncHandler(async (req, res) => {
   if (!ticket) {
     return res
       .status(404)
-      .json(errorResponse(404, "Ticket not found"));
+      .json(errorResponse("Ticket not found"));
   }
 
   // Check access
@@ -80,10 +79,10 @@ const getTicketDetail = asyncHandler(async (req, res) => {
   ) {
     return res
       .status(403)
-      .json(errorResponse(403, "Access denied"));
+      .json(errorResponse("Access denied"));
   }
 
-  res.json(successResponse(200, ticket, "Ticket fetched"));
+  res.json(successResponse(ticket, "Ticket fetched"));
 });
 
 /**
@@ -96,7 +95,7 @@ const addMessage = asyncHandler(async (req, res) => {
   if (!ticket) {
     return res
       .status(404)
-      .json(errorResponse(404, "Ticket not found"));
+      .json(errorResponse("Ticket not found"));
   }
 
   // Check access
@@ -106,7 +105,7 @@ const addMessage = asyncHandler(async (req, res) => {
   ) {
     return res
       .status(403)
-      .json(errorResponse(403, "Access denied"));
+      .json(errorResponse("Access denied"));
   }
 
   const message = new TicketMessage({
@@ -134,7 +133,7 @@ const addMessage = asyncHandler(async (req, res) => {
   }
 
   res.status(201).json(
-    successResponse(201, message, "Message added successfully")
+    successResponse(message, "Message added successfully")
   );
 });
 
@@ -148,7 +147,7 @@ const updateTicketStatus = asyncHandler(async (req, res) => {
   if (!ticket) {
     return res
       .status(404)
-      .json(errorResponse(404, "Ticket not found"));
+      .json(errorResponse("Ticket not found"));
   }
 
   ticket.status = status;
@@ -166,7 +165,7 @@ const updateTicketStatus = asyncHandler(async (req, res) => {
     { ticketId: ticket._id, status }
   );
 
-  res.json(successResponse(200, ticket, "Ticket status updated"));
+  res.json(successResponse(ticket, "Ticket status updated"));
 });
 
 /**
@@ -179,7 +178,7 @@ const escalateTicket = asyncHandler(async (req, res) => {
   if (!ticket) {
     return res
       .status(404)
-      .json(errorResponse(404, "Ticket not found"));
+      .json(errorResponse("Ticket not found"));
   }
 
   if (ticket.priority === "critical") {
@@ -187,7 +186,6 @@ const escalateTicket = asyncHandler(async (req, res) => {
       .status(400)
       .json(
         errorResponse(
-          400,
           "Ticket is already at highest priority"
         )
       );
@@ -202,7 +200,7 @@ const escalateTicket = asyncHandler(async (req, res) => {
 
   await ticket.save();
 
-  res.json(successResponse(200, ticket, "Ticket escalated"));
+  res.json(successResponse(ticket, "Ticket escalated"));
 });
 
 module.exports = {

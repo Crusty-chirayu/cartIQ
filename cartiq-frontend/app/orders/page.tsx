@@ -22,7 +22,7 @@ export default function OrdersPage() {
         const response = await get("/orders", { showToast: false });
         setOrders(response?.data || []);
       } catch (err) {
-        console.error("Failed to fetch orders");
+        console.error("Failed to fetch orders:", err);
       }
     };
 

@@ -32,13 +32,22 @@ export const useApi = () => {
           toast.success(response.data.message);
         }
 
-        options.onSuccess?.(response.data.data);
-        return response.data.data;
+        options.onSuccess?.(response.data);
+        return response.data;
       } catch (err: any) {
+        // Better error logging for debugging
         const errorMessage =
           err.response?.data?.message ||
           err.message ||
-          "An error occurred";
+          "Failed to connect to server";
+        
+        console.error(`API Error (${method.toUpperCase()} ${url}):`, {
+          message: errorMessage,
+          status: err.response?.status,
+          data: err.response?.data,
+          error: err,
+        });
+        
         setError(errorMessage);
 
         if (options.showToast !== false) {

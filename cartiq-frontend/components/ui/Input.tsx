@@ -1,4 +1,4 @@
-import React, { InputHTMLAttributes } from "react";
+import React, { InputHTMLAttributes, useId } from "react";
 import clsx from "clsx";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -24,7 +24,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
-    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+    const generatedId = useId();
+    const inputId = id || generatedId;
 
     return (
       <div className={clsx("flex flex-col", { "w-full": fullWidth })}>
@@ -36,24 +37,27 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
+
         <input
           ref={ref}
           id={inputId}
           type={type}
           className={clsx(
-            "px-4 py-2 text-base rounded-lg transition-all duration-200 focus:outline-none focus:ring-2",
+            "px-4 py-3 text-base text-gray-900 placeholder-gray-500 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 font-medium",
             {
               "w-full": fullWidth,
-              "border-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500":
+              "bg-white border-2 border-gray-400 focus:border-blue-600 focus:ring-blue-500 focus:ring-opacity-50":
                 variant === "outline" && !error,
-              "bg-gray-100 border-0 focus:bg-white focus:ring-blue-500":
+              "bg-white border-2 border-gray-300 focus:bg-white focus:border-blue-600 focus:ring-blue-500 focus:ring-opacity-50":
                 variant === "filled" && !error,
-              "border-2 border-red-500 focus:ring-red-500": error,
+              "bg-red-50 border-2 border-red-500 text-red-900 focus:border-red-600 focus:ring-red-500 focus:ring-opacity-50": error,
             },
             className
           )}
+          placeholder={props.placeholder || ""}
           {...props}
         />
+
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
         {helperText && !error && (
           <p className="mt-1 text-sm text-gray-500">{helperText}</p>

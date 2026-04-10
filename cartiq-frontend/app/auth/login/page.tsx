@@ -31,7 +31,9 @@ export default function LoginPage() {
       await login(email, password);
       router.push("/");
     } catch (err: any) {
-      error(err.response?.data?.message || "Login failed");
+      const errorMsg = err?.response?.data?.message || err?.message || "Login failed";
+      error(errorMsg);
+      console.error("Login error:", errorMsg);
     }
   };
 

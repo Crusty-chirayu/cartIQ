@@ -1,0 +1,26 @@
+{
+  "name": "cartiq",
+  "version": "1.0.0",
+  "description": "CartIQ - Multi-vendor E-commerce Platform",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd cartiq-backend && npm run dev",
+    "dev:frontend": "cd cartiq-frontend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd cartiq-backend && npm run build",
+    "build:frontend": "cd cartiq-frontend && npm run build",
+    "start": "node cartiq-backend/server.js",
+    "install:all": "npm install && npm install --prefix cartiq-backend && npm install --prefix cartiq-frontend"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.1"
+  },
+  "keywords": [
+    "ecommerce",
+    "marketplace",
+    "multi-vendor"
+  ],
+  "author": "",
+  "license": "MIT"
+}

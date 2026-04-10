@@ -8,9 +8,12 @@ const User = require("../models/User");
 const protect = async (req, res, next) => {
   let token;
 
+  // Check Authorization header first
   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     token = req.headers.authorization.split(" ")[1];
-  } else if (req.cookies.accessToken) {
+  } 
+  // Fallback to cookies
+  else if (req.cookies?.accessToken) {
     token = req.cookies.accessToken;
   }
 
@@ -23,12 +26,21 @@ const protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id);
+    
+    // Fetch user with caching in mind (add Redis caching in future)
+    req.user = await User.findById(decoded.id).select("-passwordHash");
 
-    if (!req.user || req.user.isBanned) {
+    if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: "User not found or banned.",
+        message: "User not found.",
+      });
+    }
+
+    if (req.user.isBanned) {
+      return res.status(403).json({
+        success: false,
+        message: "Account suspended.",
       });
     }
 

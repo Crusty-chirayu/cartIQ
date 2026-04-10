@@ -16,6 +16,7 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "customer",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -23,11 +24,15 @@ export default function RegisterPage() {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.name) newErrors.name = "Name is required";
-    if (!formData.email) newErrors.email = "Email is required";
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!formData.password) newErrors.password = "Password is required";
-    if (formData.password.length < 6)
+    
+    // Simple password validation - just minimum 6 characters
+    if (formData.password && formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
+    }
+    
     if (formData.password !== formData.confirmPassword)
       newErrors.confirmPassword = "Passwords do not match";
 
@@ -37,10 +42,12 @@ export default function RegisterPage() {
     }
 
     try {
-      await register(formData.name, formData.email, formData.password);
+      await register(formData.name, formData.email, formData.password, formData.role);
       router.push("/");
     } catch (err: any) {
-      error(err.response?.data?.message || "Registration failed");
+      const errorMsg = err.response?.data?.message || err.message || "Registration failed";
+      error(errorMsg);
+      console.error("Registration error:", { err, data: err.response?.data });
     }
   };
 
@@ -99,6 +106,20 @@ export default function RegisterPage() {
               error={errors.confirmPassword}
               fullWidth
             />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                I am joining as:
+              </label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full px-4 py-3 bg-white text-gray-900 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none font-medium"
+              >
+                <option value="customer">👤 Customer - Buy Products</option>
+                <option value="seller">🏪 Seller - Sell Products</option>
+              </select>
+            </div>
 
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" className="w-4 h-4" required />

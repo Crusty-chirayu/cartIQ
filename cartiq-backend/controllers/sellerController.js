@@ -225,6 +225,19 @@ const getSellerProducts = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * GET /api/vendor/kyc-status
+ */
+const getKYCStatus = asyncHandler(async (req, res) => {
+  const kyc = await KYC.findOne({ seller: req.user._id });
+
+  if (!kyc) {
+    return res.status(404).json({ success: false, message: "KYC not found" });
+  }
+
+  res.json(successResponse(kyc));
+});
+
 module.exports = {
   registerVendor,
   getProfile: getVendorProfile,        // Alias for route compatibility
@@ -237,4 +250,5 @@ module.exports = {
   getPayouts,
   requestPayout,
   getSellerProducts,
+  getKYCStatus,
 };

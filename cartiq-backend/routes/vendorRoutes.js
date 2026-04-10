@@ -9,16 +9,22 @@ const {
   getAnalyticsChart,
   getPayouts,
   requestPayout,
+  getKYCStatus,
 } = require("../controllers/sellerController");
+const { getVendorStats } = require("../controllers/vendorStatsController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
 router.use(protect, authorizeRoles("seller", "admin"));
+
+// Stats route
+router.get("/stats", getVendorStats);
 
 // Seller profile routes
 router.get("/profile", getProfile);
 router.patch("/profile", updateProfile);
 
 // KYC routes
+router.get("/kyc-status", getKYCStatus);
 router.post("/kyc", submitKYC);
 
 // Analytics routes

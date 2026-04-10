@@ -14,9 +14,12 @@ export const apiClient: AxiosInstance = axios.create({
 // Request interceptor to add token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Safe localStorage access for client-side only
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -29,7 +32,7 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && originalRequest) {
+    if (error.response?.status === 401 && originalRequest && typeof window !== "undefined") {
       try {
         const refreshToken = localStorage.getItem("refreshToken");
         const response = await axios.post(
@@ -43,8 +46,10 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return apiClient(originalRequest);
       } catch (err) {
-        localStorage.clear();
-        window.location.href = "/auth/login";
+        if (typeof window !== "undefined") {
+          localStorage.clear();
+          window.location.href = "/auth/login";
+        }
       }
     }
 
@@ -139,20 +144,31 @@ export const ordersApi = {
 
 // Wishlist API
 export const wishlistApi = {
-  get: (params?: any) =>
-    apiClient.get("/wishlist", { params }),
+  get: () =>
+    apiClient.get("/wishlist"),
   add: (productId: string) =>
-    apiClient.post(`/wishlist/${productId}`),
+    apiClient.post("/wishlist", { productId }),
   remove: (productId: string) =>
-    apiClient.delete(`/wishlist/${productId}`),
+    apiClient.delete("/wishlist", { data: { productId } }),
   toggle: (productId: string) =>
-    apiClient.patch(`/wishlist/${productId}/toggle`),
+    apiClient.post("/wishlist/toggle", { productId }),
+  clear: () =>
+    apiClient.delete("/wishlist/clear"),
+  check: (productId: string) =>
+    apiClient.get("/wishlist/check", { params: { productId } }),
 };
 
 // Reviews API
 export const reviewsApi = {
-  create: (productId: string, data: any) =>
-    apiClient.post(`/reviews/products/${productId}`, data),
+  create: (data: {
+    productId: string;
+    orderId: string;
+    rating: number;
+    title: string;
+    comment?: string;
+    images?: string[];
+  }) =>
+    apiClient.post("/reviews", data),
   getByProduct: (productId: string, params?: any) =>
     apiClient.get(`/reviews/products/${productId}`, { params }),
   getSummary: (productId: string) =>
@@ -161,6 +177,8 @@ export const reviewsApi = {
     apiClient.patch(`/reviews/${id}`, data),
   delete: (id: string) =>
     apiClient.delete(`/reviews/${id}`),
+  markHelpful: (id: string) =>
+    apiClient.patch(`/reviews/${id}/helpful`),
 };
 
 // AI API

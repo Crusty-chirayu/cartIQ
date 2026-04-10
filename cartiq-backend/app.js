@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const helmet = require("helmet");
-const mongoSanitize = require("express-mongo-sanitize");
 const compression = require("compression");
 
 const logger = require("./utils/logger");
@@ -13,7 +12,26 @@ const app = express();
 
 // ================== MIDDLEWARE ==================
 app.use(helmet());
-app.use(mongoSanitize());
+// Manual sanitization middleware for security (prevents NoSQL injection)
+app.use((req, res, next) => {
+  // Sanitize req.query, req.body, req.params to remove $ and . characters
+  const sanitize = (obj) => {
+    if (obj && typeof obj === 'object') {
+      for (const key in obj) {
+        if (key.includes('$') || key.includes('.')) {
+          delete obj[key];
+        } else if (typeof obj[key] === 'object') {
+          sanitize(obj[key]);
+        }
+      }
+    }
+    return obj;
+  };
+  sanitize(req.query);
+  sanitize(req.body);
+  sanitize(req.params);
+  next();
+});
 app.use(compression());
 
 app.use(
@@ -22,6 +40,15 @@ app.use(
     credentials: true,
   })
 );
+
+// CRITICAL: Store raw body for webhook signature verification
+app.use((req, res, next) => {
+  if (req.path === "/api/payments/webhook/stripe") {
+    express.raw({ type: "application/json" })(req, res, next);
+  } else {
+    next();
+  }
+});
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -58,6 +85,7 @@ const safeRoute = (path, routePath) => {
 // ================== ROUTES ==================
 safeRoute("/api/auth", "./routes/authRoutes");
 safeRoute("/api/products", "./routes/productRoutes");
+safeRoute("/api/categories", "./routes/categoryRoutes");
 safeRoute("/api/cart", "./routes/cartRoutes");
 safeRoute("/api/orders", "./routes/orderRoutes");
 safeRoute("/api/wishlist", "./routes/wishlistRoutes");

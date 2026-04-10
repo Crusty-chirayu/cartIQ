@@ -28,7 +28,7 @@ export default function AdminDashboardPage() {
         const response = await get("/admin/stats", { showToast: false });
         setStats(response?.data || response);
       } catch (err) {
-        console.error("Failed to fetch stats");
+        console.error("Failed to fetch stats:", err);
       } finally {
         setLoading(false);
       }
@@ -112,6 +112,7 @@ export default function AdminDashboardPage() {
             { label: "Manage Products", href: "/admin/products" },
             { label: "Manage Orders", href: "/admin/orders" },
             { label: "Verify Sellers", href: "/admin/sellers" },
+            { label: "KYC Verification", href: "/admin/kyc" },
             { label: "Transactions", href: "/admin/transactions" },
             { label: "Analytics", href: "/admin/analytics" },
           ].map((action, idx) => (

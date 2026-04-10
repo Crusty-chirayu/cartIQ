@@ -18,7 +18,8 @@ interface AuthContextType {
   register: (
     name: string,
     email: string,
-    password: string
+    password: string,
+    role?: string
   ) => Promise<void>;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
@@ -35,7 +36,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const token = localStorage.getItem("token");
         if (token) {
-          // Verify token by getting user profile
           const response = await apiClient.get("/auth/profile");
           if (response.data.success) {
             setUser(response.data.data);
@@ -74,13 +74,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string, role: string = "customer") => {
     setIsLoading(true);
     try {
       const response = await apiClient.post("/auth/register", {
         name,
         email,
         password,
+        role,
       });
 
       const { user, token, refreshToken } = response.data.data as LoginResponse;
@@ -124,18 +125,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuthContext = () => {
   const context = useContext(AuthContext);
+
   if (!context) {
     throw new Error("useAuthContext must be used within AuthProvider");
   }
+
   return context;
 };
-
-  const context = useContext(AuthContext)
-
-  if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider")
-  }
-
-  return context
-
-}

@@ -17,14 +17,14 @@ const initiatePayment = asyncHandler(async (req, res) => {
   if (!order) {
     return res
       .status(404)
-      .json(errorResponse(404, "Order not found"));
+      .json(errorResponse("Order not found", 404));
   }
 
   // Verify order belongs to user
-  if (order.userId._id.toString() !== req.user._id.toString()) {
+  if (order.user._id.toString() !== req.user._id.toString()) {
     return res
       .status(403)
-      .json(errorResponse(403, "Unauthorized"));
+      .json(errorResponse("Unauthorized", 403));
   }
 
   try {
@@ -35,15 +35,15 @@ const initiatePayment = asyncHandler(async (req, res) => {
 
     res.json(
       successResponse(
-        200,
         paymentData,
-        "Payment initiated successfully"
+        "Payment initiated successfully",
+        200
       )
     );
   } catch (error) {
     res
       .status(400)
-      .json(errorResponse(400, error.message));
+      .json(errorResponse(error.message, 400));
   }
 });
 
@@ -63,7 +63,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
     if (!verified) {
       return res
         .status(400)
-        .json(errorResponse(400, "Payment verification failed"));
+        .json(errorResponse("Payment verification failed", 400));
     }
 
     const order = await Order.findById(orderId);
@@ -93,15 +93,15 @@ const verifyPayment = asyncHandler(async (req, res) => {
 
     res.json(
       successResponse(
-        200,
         { order, transaction },
-        "Payment verified successfully"
+        "Payment verified successfully",
+        200
       )
     );
   } catch (error) {
     res
       .status(400)
-      .json(errorResponse(400, error.message));
+      .json(errorResponse(error.message));
   }
 });
 
@@ -137,37 +137,36 @@ const getTransactions = asyncHandler(async (req, res) => {
 
 /**
  * Handle payment webhook (Stripe/Razorpay)
+ * CRITICAL: Must verify webhook signatures to prevent spoofing
  */
 const handleWebhook = asyncHandler(async (req, res) => {
   const { provider } = req.params;
-  const payload = req.body;
 
   try {
-    // Verify webhook signature
-    let event;
-
     if (provider === "stripe") {
-      const stripe = require("stripe")(
-        process.env.STRIPE_SECRET_KEY
-      );
-      const sig = req.headers[
-        "stripe-signature"
-      ];
+      const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+      const sig = req.headers["stripe-signature"];
+
+      if (!sig) {
+        return res
+          .status(400)
+          .json(errorResponse("Missing stripe-signature header", 400));
+      }
+
+      // CRITICAL: Must use raw body for signature verification
+      const rawBody = req.rawBody || JSON.stringify(req.body);
+      let event;
+
       try {
         event = stripe.webhooks.constructEvent(
-          req.rawBody,
+          rawBody,
           sig,
           process.env.STRIPE_WEBHOOK_SECRET
         );
       } catch (err) {
         return res
           .status(400)
-          .json(
-            errorResponse(
-              400,
-              `Webhook Error: ${err.message}`
-            )
-          );
+          .json(errorResponse(`Webhook signature verification failed: ${err.message}`, 400));
       }
 
       // Handle charge.succeeded event
@@ -181,31 +180,42 @@ const handleWebhook = asyncHandler(async (req, res) => {
           transaction.status = "completed";
           await transaction.save();
 
-          const order = await Order.findById(
-            transaction.orderId
-          );
+          const order = await Order.findById(transaction.orderId);
           if (order) {
             order.payment.status = "completed";
+            order.payment.paidAt = new Date();
             order.status = "confirmed";
             await order.save();
+
+            // Notify user
+            await notificationService.sendNotification(
+              order.user,
+              "payment_confirmed",
+              { orderId: order._id }
+            );
           }
         }
       }
+
     } else if (provider === "razorpay") {
-      // Razorpay webhook validation
       const crypto = require("crypto");
-      const shasum = crypto.createHmac(
+      const hmac = crypto.createHmac(
         "sha256",
         process.env.RAZORPAY_WEBHOOK_SECRET
       );
-      shasum.update(JSON.stringify(payload));
-      const digest = shasum.digest("hex");
 
-      if (digest !== req.headers["x-razorpay-signature"]) {
+      const rawBody = req.rawBody || JSON.stringify(req.body);
+      hmac.update(rawBody);
+      const computedSignature = hmac.digest("hex");
+      const receivedSignature = req.headers["x-razorpay-signature"];
+
+      if (computedSignature !== receivedSignature) {
         return res
           .status(400)
-          .json(errorResponse(400, "Invalid signature"));
+          .json(errorResponse("Invalid Razorpay webhook signature", 400));
       }
+
+      const payload = (typeof req.body === "string") ? JSON.parse(req.body) : req.body;
 
       if (payload.event === "payment.authorized") {
         const transaction = await Transaction.findOne({
@@ -216,24 +226,34 @@ const handleWebhook = asyncHandler(async (req, res) => {
           transaction.status = "completed";
           await transaction.save();
 
-          const order = await Order.findById(
-            transaction.orderId
-          );
+          const order = await Order.findById(transaction.orderId);
           if (order) {
             order.payment.status = "completed";
+            order.payment.paidAt = new Date();
             order.status = "confirmed";
             await order.save();
+
+            await notificationService.sendNotification(
+              order.user,
+              "payment_confirmed",
+              { orderId: order._id }
+            );
           }
         }
       }
+    } else {
+      return res
+        .status(400)
+        .json(errorResponse("Invalid payment provider", 400));
     }
 
     res.json({ received: true });
+
   } catch (error) {
     console.error("Webhook error:", error);
     res
       .status(500)
-      .json(errorResponse(500, "Webhook processing failed"));
+      .json(errorResponse("Webhook processing failed", 500));
   }
 });
 

@@ -21,6 +21,7 @@ router.patch("/users/:id/ban", banUser);
 
 // Seller management
 router.get("/sellers", getAllSellers);
+router.get("/kyc", getKYCRequests);
 router.patch("/kyc/:id/approve", approveKYC);
 router.patch("/kyc/:id/reject", rejectKYC);
 

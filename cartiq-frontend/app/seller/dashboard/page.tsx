@@ -24,10 +24,10 @@ export default function SellerDashboardPage() {
 
     const fetchStats = async () => {
       try {
-        const response = await get("/seller/stats", { showToast: false });
+        const response = await get("/vendor/stats", { showToast: false });
         setStats(response?.data || response);
       } catch (err) {
-        console.error("Failed to fetch stats");
+        console.error("Failed to fetch stats:", err);
       } finally {
         setLoading(false);
       }

@@ -6,6 +6,8 @@ const {
   removeFromWishlist,
   getWishlist,
   toggleWishlist,
+  clearWishlist,
+  isInWishlist,
 } = require("../controllers/wishlistController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -14,8 +16,10 @@ const { protect } = require("../middleware/authMiddleware");
 router.use(protect);
 
 router.get("/", getWishlist);
-router.post("/:productId", addToWishlist);
-router.delete("/:productId", removeFromWishlist);
-router.patch("/:productId/toggle", toggleWishlist);
+router.get("/check", isInWishlist);
+router.post("/", addToWishlist);
+router.post("/toggle", toggleWishlist);
+router.delete("/", removeFromWishlist);
+router.delete("/clear", clearWishlist);
 
 module.exports = router;

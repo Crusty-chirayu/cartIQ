@@ -20,9 +20,8 @@ const getCart = asyncHandler(async (req, res) => {
     cart = await Cart.create({ user: req.user._id });
   }
 
-  // Recalculate totals
-  updateCartTotals(cart);
-  await cart.save();
+  // Cart returned with populated items
+  // Totals calculated by frontend or via Cart model virtuals
 
   res.json(successResponse(cart));
 });
@@ -72,8 +71,13 @@ const addItem = asyncHandler(async (req, res) => {
     cart.items.push(newItem._id);
   }
 
-  updateCartTotals(cart);
   await cart.save();
+
+  // Re-populate items for response
+  await cart.populate({
+    path: "items",
+    populate: { path: "product seller" },
+  });
 
   res.json(successResponse(cart, "Item added", 201));
 });

@@ -17,7 +17,7 @@ export default function AdminSellersPage() {
         const response = await get("/admin/sellers", { showToast: false });
         setSellers(response?.data || []);
       } catch (err) {
-        console.error("Failed to fetch sellers");
+        console.error("Failed to fetch sellers:", err);
       } finally {
         setLoading(false);
       }
@@ -35,7 +35,7 @@ export default function AdminSellersPage() {
         )
       );
     } catch (err) {
-      console.error("Failed to approve KYC");
+      console.error("Failed to approve KYC:", err);
     }
   };
 
