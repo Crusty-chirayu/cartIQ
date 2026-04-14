@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import clsx from "clsx";
+import React, { useState, useEffect } from "react";
 
 interface PriceRangeProps {
   minPrice: number;
@@ -15,55 +14,52 @@ const PriceRange: React.FC<PriceRangeProps> = ({
   const [localMin, setLocalMin] = useState(minPrice);
   const [localMax, setLocalMax] = useState(maxPrice);
 
-  const handleMinChange = (value: number) => {
-    if (value <= localMax) {
-      setLocalMin(value);
-      onPriceChange(value, localMax);
-    }
-  };
+  useEffect(() => {
+    setLocalMin(minPrice);
+    setLocalMax(maxPrice);
+  }, [minPrice, maxPrice]);
 
-  const handleMaxChange = (value: number) => {
-    if (value >= localMin) {
-      setLocalMax(value);
-      onPriceChange(localMin, value);
-    }
-  };
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      onPriceChange(localMin, localMax);
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [localMin, localMax]);
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">
-          Min Price: ₹{localMin}
-        </label>
+      <div>
+        <label>Min Price: ₹{localMin}</label>
         <input
           type="range"
           min={0}
-          max={maxPrice}
+          max={100000}
           value={localMin}
-          onChange={(e) => handleMinChange(Number(e.target.value))}
+          onChange={(e) => {
+            const val = Number(e.target.value);
+            if (val <= localMax) setLocalMin(val);
+          }}
           className="w-full"
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">
-          Max Price: ₹{localMax}
-        </label>
+      <div>
+        <label>Max Price: ₹{localMax}</label>
         <input
           type="range"
           min={0}
-          max={maxPrice}
+          max={100000}
           value={localMax}
-          onChange={(e) => handleMaxChange(Number(e.target.value))}
+          onChange={(e) => {
+            const val = Number(e.target.value);
+            if (val >= localMin) setLocalMax(val);
+          }}
           className="w-full"
         />
       </div>
 
-      <div className="pt-2 border-t border-gray-200">
-        <p className="text-sm text-gray-600">
-          ₹{localMin} - ₹{localMax}
-        </p>
-      </div>
+      <p>₹{localMin} - ₹{localMax}</p>
     </div>
   );
 };

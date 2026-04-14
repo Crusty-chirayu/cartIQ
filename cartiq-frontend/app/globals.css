@@ -1,7 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import "tailwindcss";
+
+/* REMOVE THIS ❌ */
+/* @import "tailwindcss"; */
 
 :root {
   --background: #ffffff;
@@ -115,7 +117,6 @@ input::placeholder {
 }
 
 /* ===== MODAL ===== */
-
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -138,7 +139,6 @@ input::placeholder {
 }
 
 /* ===== CART SIDEBAR ===== */
-
 .cart-overlay {
   position: fixed;
   inset: 0;
@@ -161,7 +161,6 @@ input::placeholder {
 }
 
 /* ===== BUTTONS ===== */
-
 .btn-primary {
   background: #111;
   color: white;
@@ -180,7 +179,6 @@ input::placeholder {
 }
 
 /* ===== INPUT ===== */
-
 .search-input {
   border: 1px solid #ddd;
   border-radius: 10px;

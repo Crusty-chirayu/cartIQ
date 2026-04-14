@@ -12,15 +12,15 @@ const app = express();
 
 // ================== MIDDLEWARE ==================
 app.use(helmet());
-// Manual sanitization middleware for security (prevents NoSQL injection)
+
+// Manual sanitization middleware
 app.use((req, res, next) => {
-  // Sanitize req.query, req.body, req.params to remove $ and . characters
   const sanitize = (obj) => {
-    if (obj && typeof obj === 'object') {
+    if (obj && typeof obj === "object") {
       for (const key in obj) {
-        if (key.includes('$') || key.includes('.')) {
+        if (key.includes("$") || key.includes(".")) {
           delete obj[key];
-        } else if (typeof obj[key] === 'object') {
+        } else if (typeof obj[key] === "object") {
           sanitize(obj[key]);
         }
       }
@@ -32,6 +32,7 @@ app.use((req, res, next) => {
   sanitize(req.params);
   next();
 });
+
 app.use(compression());
 
 app.use(
@@ -41,7 +42,7 @@ app.use(
   })
 );
 
-// CRITICAL: Store raw body for webhook signature verification
+// Webhook raw body
 app.use((req, res, next) => {
   if (req.path === "/api/payments/webhook/stripe") {
     express.raw({ type: "application/json" })(req, res, next);
@@ -64,37 +65,19 @@ app.get("/health", (req, res) => {
   res.json({ status: "OK" });
 });
 
-// ================== SAFE ROUTE LOADER ==================
-const safeRoute = (path, routePath) => {
-  try {
-    const route = require(routePath);
-
-    if (typeof route !== "function") {
-      console.log(`❌ ${routePath} is NOT a router`);
-      return;
-    }
-
-    console.log(`✅ Loaded ${routePath}`);
-    app.use(path, route);
-  } catch (err) {
-    console.log(`❌ Failed to load ${routePath}`);
-    console.log(err.message);
-  }
-};
-
-// ================== ROUTES ==================
-safeRoute("/api/auth", "./routes/authRoutes");
-safeRoute("/api/products", "./routes/productRoutes");
-safeRoute("/api/categories", "./routes/categoryRoutes");
-safeRoute("/api/cart", "./routes/cartRoutes");
-safeRoute("/api/orders", "./routes/orderRoutes");
-safeRoute("/api/wishlist", "./routes/wishlistRoutes");
-safeRoute("/api/reviews", "./routes/reviewRoutes");
-safeRoute("/api/ai", "./routes/aiRoutes");
-safeRoute("/api/support", "./routes/supportRoutes");
-safeRoute("/api/vendor", "./routes/vendorRoutes");
-safeRoute("/api/admin", "./routes/adminRoutes");
-safeRoute("/api/payments", "./routes/paymentRoutes");
+// ================== ROUTES (FIXED) ==================
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/products", require("./routes/productRoutes"));
+app.use("/api/categories", require("./routes/categoryRoutes"));
+app.use("/api/cart", require("./routes/cartRoutes"));
+app.use("/api/orders", require("./routes/orderRoutes"));
+app.use("/api/wishlist", require("./routes/wishlistRoutes"));
+app.use("/api/reviews", require("./routes/reviewRoutes"));
+app.use("/api/ai", require("./routes/aiRoutes"));
+app.use("/api/support", require("./routes/supportRoutes"));
+app.use("/api/vendor", require("./routes/vendorRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/payments", require("./routes/paymentRoutes"));
 
 // ================== 404 ==================
 app.use((req, res) => {

@@ -3,7 +3,6 @@
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { apiClient } from "@/lib/api";
-import { AxiosError } from "axios";
 
 interface UseApiOptions {
   onSuccess?: (data: any) => void;
@@ -26,28 +25,33 @@ export const useApi = () => {
       setError(null);
 
       try {
-        const response = await apiClient[method](url, data);
+        let response;
 
-        if (options.showToast !== false && response.data.message) {
+        // ✅ FIX: handle GET separately
+        if (method === "get") {
+          response = await apiClient.get(url);
+        } else {
+          response = await apiClient[method](url, data);
+        }
+
+        if (options.showToast !== false && response.data?.message) {
           toast.success(response.data.message);
         }
 
         options.onSuccess?.(response.data);
         return response.data;
       } catch (err: any) {
-        // Better error logging for debugging
         const errorMessage =
           err.response?.data?.message ||
           err.message ||
           "Failed to connect to server";
-        
+
         console.error(`API Error (${method.toUpperCase()} ${url}):`, {
           message: errorMessage,
           status: err.response?.status,
           data: err.response?.data,
-          error: err,
         });
-        
+
         setError(errorMessage);
 
         if (options.showToast !== false) {
